@@ -92,6 +92,7 @@ The previews site also serves a plain top-level `index.html` that **HTTP-200 red
 ## Repositories
 
 ### Source repository (this one)
+
 `stklug84/curveball-ventures`
 
 - Holds the Jekyll source: `_config.yml`, `index.html`, `assets/`.
@@ -102,6 +103,7 @@ The previews site also serves a plain top-level `index.html` that **HTTP-200 red
 - `preview/` is **git-ignored** locally; it is a local checkout of the previews repo for convenience, never committed here.
 
 ### Previews repository
+
 `stklug84/curveball-ventures-previews`
 
 - Pages source: `main` branch, root.
@@ -163,15 +165,18 @@ All four workflows live in `.github/workflows/`. They are intentionally decouple
 ### Production deploy (`jekyll-gh-pages.yml`)
 
 **Triggers**
+
 - `push` to `main` (the normal case — happens automatically after a PR merge)
 - `workflow_dispatch` (manual escape hatch from the Actions tab)
 
 **Steps**
+
 1. **Build job**: checkout, `actions/configure-pages`, `actions/jekyll-build-pages` against repo root → `_site/`, upload artifact.
 2. **Deploy job**: `actions/deploy-pages` publishes the artifact. The job declares `environment: github-pages`, which means the GitHub-managed `github-pages` environment gates the deploy.
 
 **Why the environment matters**
 The `github-pages` environment is configured (manually, in repo settings) with:
+
 - **Required reviewer**: `@stklug84` — every production deploy pauses for explicit approval.
 - **Deployment branches**: `main` only.
 
@@ -183,10 +188,12 @@ The workflow uses `concurrency: { group: "pages", cancel-in-progress: false }`. 
 ### Preview deploy (`preview-deploy.yml`)
 
 **Triggers**
+
 - `push` to any branch (`branches: ['**']`)
 - `workflow_dispatch`
 
 **Steps**
+
 1. Checkout the source repo with `fetch-depth: 0`.
 2. Compute `SHORT_SHA=${GITHUB_SHA:0:7}` and export to `$GITHUB_ENV`.
 3. **Override `_config.yml`** runner-locally (never committed back):
@@ -215,6 +222,7 @@ The `baseurl` override is essential. Without it, a preview at `/abc1234/` would 
 ### PR validation (`pr-validate.yml`)
 
 **Triggers**
+
 - `pull_request` to `main` on `[opened, synchronize, reopened]`
 
 **Concurrency**
@@ -238,9 +246,11 @@ Only `pr-validate / build` is wired as a required status check in branch protect
 ### PR preview comment (`pr-comment-preview.yml`)
 
 **Triggers**
+
 - `pull_request` to `main` on `[opened, synchronize, reopened]`
 
 **Steps**
+
 1. Compute the short SHA from `github.event.pull_request.head.sha`.
 2. Use `marocchino/sticky-pull-request-comment@v2` with `header: preview-url` to upsert a single sticky comment on the PR containing the deterministic preview URL (`https://curveball-ventures.info/<short-sha>/`), branch name, and full commit SHA.
 
@@ -255,6 +265,7 @@ The `header: preview-url` key tells the action to find any prior comment with th
 ## Branching and PR process
 
 ### Branching model
+
 - `main` — always reflects what is live on `curveball-ventures.com`. Protected.
 - Feature branches — `feat/...`, `fix/...`, `chore/...`, `docs/...`. Created from `main`.
 - Direct pushes to `main` are not allowed by branch protection. The only way changes reach `main` is via PR + squash merge.
@@ -262,18 +273,23 @@ The `header: preview-url` key tells the action to find any prior comment with th
 ### Lifecycle of a change
 
 1. **Create branch** from `main`:
+
    ```bash
    git checkout main
    git pull
    git checkout -b feat/landing-copy
    ```
+
 2. **Commit and push** to the feature branch:
+
    ```bash
    git add .
    git commit -m "Add hero subtitle"
    git push -u origin feat/landing-copy
    ```
+
    On push, `preview-deploy.yml` fires, building the site and pushing it to `curveball-ventures-previews` under `/<short-sha>/`. The preview is reachable within ~30s.
+
 3. **Open a PR** to `main`. The PR template populates the body with a reviewer checklist.
    - `pr-validate.yml` runs the build (required) and all linters (advisory).
    - `pr-comment-preview.yml` posts a sticky comment with the preview URL.
@@ -283,7 +299,9 @@ The `header: preview-url` key tells the action to find any prior comment with th
 6. **Deploy**: merging to `main` triggers `jekyll-gh-pages.yml`. It builds and queues a deployment to the `github-pages` environment, which **pauses for approval**. The approver (you) reviews the production deploy in the Actions UI and clicks approve. The site goes live.
 
 ### Merge strategy
+
 **Squash merge** is the only enabled strategy in repository settings. Each PR becomes one commit on `main`, named after the PR title. Consequences:
+
 - `main` history is linear and clean.
 - The commit on `main` has a **different SHA** than the last commit on the feature branch. The `.info/<sha>/` preview that was reviewed remains at the feature branch's SHA; after merge a new preview is built at the squash commit's SHA. Both work; the URL just changes.
 - Reverting a PR is a single commit revert.
@@ -349,21 +367,27 @@ A repository secret is exposed to **every** workflow in the repo. An environment
 Each linter has a dedicated config file at the repo root. All are wired into `pr-validate.yml` as advisory jobs.
 
 ### `.htmlvalidate.json`
+
 Extends `html-validate:recommended`. Currently relaxed: `no-inline-style: "warn"` (the landing page uses an inline `<style>` block), `void-style: "off"`, `require-sri: "off"`. Tighten as content grows.
 
 ### `.cspell.json`
+
 Project allowlist with terms like `Curveball`, `Jekyll`, `stklug`, `lychee`, `actionlint`. Ignores `_site/**`, `preview/**`, `.git/**`, `node_modules/**`.
 
 ### `.markdownlint.jsonc`
+
 Permissive markdown rules. `MD013` (line length), `MD033` (inline HTML — needed for Jekyll-flavored markdown), and `MD041` (first line must be h1) are disabled.
 
 ### `.yamllint.yml`
+
 Relaxed: `line-length` is a warning at 200 chars, `truthy` disabled, `document-start` disabled (workflow files don't start with `---`).
 
 ### `.lycheeignore`
+
 Initially empty. Add regex patterns of URLs to skip when external links prove flaky.
 
 ### `actionlint`
+
 No config file — runs against all workflow files with defaults. Catches shell-injection patterns and YAML schema errors in workflows.
 
 ---
@@ -371,19 +395,25 @@ No config file — runs against all workflow files with defaults. Catches shell-
 ## Local development
 
 ### Prerequisites
+
 - Ruby ≥ 3.1 with Bundler (only if you want to run Jekyll locally; the CI uses `actions/jekyll-build-pages` which provides Ruby).
 - Git.
 
 ### Build the site locally
+
 There is no `Gemfile` checked in (the production build uses GitHub's preinstalled Jekyll image). To preview locally:
+
 ```bash
 gem install jekyll
 jekyll serve
 ```
+
 Open `http://localhost:4000/`.
 
 ### Working with the previews repo
+
 The `preview/` directory is git-ignored in this repo but is a checkout of `stklug84/curveball-ventures-previews`. If you want to modify the previews repo's `index.html`, `CNAME`, or `.nojekyll`, do so inside `preview/` and push from there:
+
 ```bash
 cd preview
 git pull
@@ -392,9 +422,11 @@ git add .
 git commit -m "Update redirect target"
 git push
 ```
+
 The preview workflow only writes to `<short-sha>/` subdirectories; it never modifies the previews repo's root files.
 
 ### Running linters locally (optional)
+
 ```bash
 # YAML
 pipx install yamllint
@@ -418,6 +450,7 @@ actionlint
 ## Operational runbook
 
 ### "I want to ship a change to the live site"
+
 1. Branch from `main`.
 2. Commit, push.
 3. Open a PR. Watch the sticky comment appear; open the preview URL.
@@ -425,17 +458,22 @@ actionlint
 5. Merge (squash). Approve the production deploy when the `github-pages` environment prompt appears in the Actions tab.
 
 ### "The preview workflow is failing with 403 / authentication errors"
+
 The PAT has likely expired or been revoked. Generate a new fine-grained PAT, update the `PREVIEWS_DEPLOY_TOKEN` secret in the `previews` environment, and re-run the failed workflow.
 
 ### "The production deploy is stuck waiting"
+
 It is paused at the `github-pages` environment approval gate. Open the run in Actions → Review deployments → Approve.
 
 ### "I need to roll back production"
+
 - **Preferred**: revert the offending commit on `main` via a new PR. Merging the revert PR triggers a new deploy.
 - **Hot path**: re-run the most recent successful `jekyll-gh-pages.yml` workflow run via `workflow_dispatch` from the previous good commit. Branch protection still applies — the workflow runs against whatever commit `main` currently points to, so a true rollback still requires a revert PR.
 
 ### "I want to delete an old preview manually"
+
 The pruning step keeps the newest 20 by git timestamp. To force a delete:
+
 ```bash
 cd preview
 git pull
@@ -446,9 +484,11 @@ git push
 ```
 
 ### "I want to force a fresh production deploy without a code change"
+
 Actions tab → `Deploy Jekyll with GitHub Pages dependencies preinstalled` → Run workflow → branch `main`. This is the `workflow_dispatch` escape hatch.
 
 ### "The DNS / HTTPS cert is failing for one of the domains"
+
 Check Settings → Pages in the respective repository. Re-validate the custom domain. Wait up to 24h for certificate provisioning.
 
 ---
@@ -456,23 +496,28 @@ Check Settings → Pages in the respective repository. Re-validate the custom do
 ## Security model
 
 ### Trust boundaries
+
 - **`main` is trusted**. Branch protection ensures every commit on `main` arrived via PR with the required `pr-validate / build` check and a code-owner review.
 - **Other branches are semi-trusted**. Anyone with write access can push. Their commits trigger the preview workflow but not production.
 - **PRs from forks** (currently impossible because the repo is single-account, but applicable if it goes public): GitHub does not expose secrets to fork PR workflows by default. The preview workflow would not run for fork PRs unless explicitly configured otherwise.
 
 ### PAT exposure surface
+
 Anyone who can edit `.github/workflows/preview-deploy.yml` and merge that change can read `PREVIEWS_DEPLOY_TOKEN`. Defenses in depth:
+
 1. **CODEOWNERS** on `.github/workflows/**` and `.github/CODEOWNERS` itself — requires code-owner review on any modification.
 2. **Branch protection** requires code-owner review and a passing status check.
 3. **Environment secret** scoping — only jobs declaring `environment: previews` can read the PAT, so a maliciously added new workflow has to also declare the environment, which is more visible in review.
 4. **Fine-grained PAT** scoped to only the previews repo — even if leaked, blast radius is bounded.
 
 ### What this design does *not* protect against
+
 - A compromised author account.
 - A malicious code-owner approving their own bad PR (if approvals are raised to 1 from a collaborator).
 - The PAT being leaked outside GitHub (e.g. pasted into chat). Rotate immediately if suspected.
 
 ### Hardening upgrades to consider later
+
 - Replace the PAT with a **GitHub App installation token**: short-lived (~1h), auto-rotating, explicit per-repo permissions.
 - Enable **secret scanning** and **push protection** in the repo.
 - Add **CodeQL** analysis for any future JavaScript/Ruby code.
@@ -482,39 +527,51 @@ Anyone who can edit `.github/workflows/preview-deploy.yml` and merge that change
 ## FAQ and design rationale
 
 ### Why two domains and two repos?
+
 GitHub Pages allows only one custom domain per repository. We need both a stable production URL and per-commit preview URLs accessible simultaneously. Two repos is the simplest solution that avoids introducing a third-party host (Cloudflare Pages, Netlify, etc.).
 
 ### Why not Cloudflare Pages or Netlify for previews?
+
 Considered and rejected. Either would give native per-commit preview URLs out of the box, but introduces a third vendor, a separate auth model, and pricing/quota considerations. The two-repo approach keeps everything inside GitHub.
 
 ### Why not a git submodule for the previews repo?
+
 Considered and rejected. A submodule pins a specific commit, meaning the source repo would need a follow-up commit after every preview push to update the pointer. This adds noise to `main`'s history without operational benefit. The current design uses a runtime `actions/checkout` of the previews repo, which has identical access without coupling.
 
 ### Why is the previews repo's `index.html` a meta-refresh redirect and not a directory listing?
+
 By design: we wanted preview URLs to be **unguessable** by random visitors. The root page sends visitors back to `curveball-ventures.com`. Individual previews remain accessible to anyone who has the URL (the PR sticky comment, the workflow summary, or a direct share), but are not enumerable from the root.
 
 ### Why HTTP 200 with a meta-refresh instead of a real HTTP 301?
+
 GitHub Pages does not allow custom HTTP status codes for arbitrary paths. A real 301 would require either the `jekyll-redirect-from` plugin (overkill — would re-enable Jekyll on the previews repo, conflicting with `.nojekyll`) or an external host. Meta-refresh is functionally equivalent for users and well-understood by search engines, especially when paired with `<link rel="canonical">`.
 
 ### Why is the build job the only required CI check?
+
 A clean build is the minimum signal we trust: it proves the Jekyll source is well-formed and produces deployable output. Lint failures are real but often noisy on a new codebase; making them all required up front would block legitimate PRs over cosmetic issues. The advisory tier gives reviewers signal without strict gates. Promote any job to required by editing branch protection — it's a one-checkbox change.
 
 ### Why is `prefers-color-scheme` dark-mode support inline in the page?
+
 The site is currently a single page with a heading. An external stylesheet would add one HTTP request and a separate file to manage for ~15 lines of CSS. As the site grows, extract to `assets/main.css`.
 
 ### Why does the workflow only keep 20 previews?
+
 Pragmatic balance: enough to compare branches across a sprint, few enough that the previews repo doesn't bloat. Adjust by editing `KEEP_LAST` in `.github/workflows/preview-deploy.yml`.
 
 ### What happens if I push the same commit twice (e.g. force-push, rebase)?
+
 The preview workflow runs again. The `<short-sha>` directory in the previews repo is deleted and re-created; the commit message in the previews repo reflects the new push. No corruption, no duplicate previews.
 
 ### What if two branches contain the same commit SHA?
+
 Both pushes target the same `<short-sha>/` folder. The first push deploys, the second push sees no content change and skips the commit (`git diff --cached --quiet && exit 0`). The preview reflects whichever ran first; both branches' PR comments point to the same valid URL.
 
 ### Why is the `.com` build's `_config.yml` minimal (just `title:`)?
+
 The production deploy serves the site at the apex of `curveball-ventures.com`, so `baseurl` is empty and `url` would only matter for absolute URL helpers (which the current page doesn't use). The preview workflow adds those keys at build time. Keeping `_config.yml` minimal avoids confusion about whether values apply to prod, preview, or both.
 
 ### How do I add a new linter to the PR pipeline?
+
 1. Add the config file at the repo root if needed.
 2. Add a job to `.github/workflows/pr-validate.yml`, modeled after the existing ones (`continue-on-error: true` to start).
 3. Open a PR. Verify it runs.
@@ -525,11 +582,13 @@ The production deploy serves the site at the apex of `curveball-ventures.com`, s
 ## Quick reference
 
 ### Key URLs
+
 - Production: <https://curveball-ventures.com>
 - Previews root (redirects): <https://curveball-ventures.info>
 - Preview pattern: `https://curveball-ventures.info/<short-sha>/`
 
 ### Key files
+
 - `.github/workflows/jekyll-gh-pages.yml` — production deploy
 - `.github/workflows/preview-deploy.yml` — preview deploy
 - `.github/workflows/pr-validate.yml` — PR CI
@@ -539,6 +598,7 @@ The production deploy serves the site at the apex of `curveball-ventures.com`, s
 - `index.html` — production landing page
 
 ### Key commands
+
 ```bash
 # Start a change
 git checkout -b feat/your-thing main
@@ -554,10 +614,11 @@ cd preview && git pull && cd ..
 ```
 
 ### Maintenance calendar
+
 - **PAT rotation**: ~2 weeks before `PREVIEWS_DEPLOY_TOKEN` expires (max 1 year). GitHub emails reminders.
 - **Dependabot PRs**: weekly, merge after `pr-validate / build` passes.
 - **Lint config review**: revisit advisory linters quarterly; promote stable ones to required.
 
 ---
 
-_Last updated: 2026-05-22_
+*Last updated: 2026-05-22*
