@@ -1,5 +1,9 @@
 # Curveball Ventures
 
+[![Validate Jekyll Pages](https://github.com/stklug84/curveball-ventures/actions/workflows/validate-jekyll-pages.yml/badge.svg)](https://github.com/stklug84/curveball-ventures/actions/workflows/validate-jekyll-pages.yml)
+[![Deploy Jekyll to GitHub Pages](https://github.com/stklug84/curveball-ventures/actions/workflows/deploy-jekyll-to-github-pages.yml/badge.svg)](https://github.com/stklug84/curveball-ventures/actions/workflows/deploy-jekyll-to-github-pages.yml)
+[![Deploy per-commit preview](https://github.com/stklug84/curveball-ventures/actions/workflows/deploy-jekyll-preview-per-commit.yml/badge.svg)](https://github.com/stklug84/curveball-ventures/actions/workflows/deploy-jekyll-preview-per-commit.yml)
+
 Source repository for the production website at **[curveball-ventures.com](https://curveball-ventures.com)** and the per-commit preview site at **[curveball-ventures.info](https://curveball-ventures.info)**.
 
 This README documents the entire deployment architecture, branching model, CI pipeline, and operational runbook. It is intended both as onboarding material for new contributors and as a reference for the repository author.
@@ -396,16 +400,16 @@ No config file — runs against all workflow files with defaults. Catches shell-
 
 ### Prerequisites
 
-- Ruby ≥ 3.1 with Bundler (only if you want to run Jekyll locally; the CI uses `actions/jekyll-build-pages` which provides Ruby).
+- Ruby ≥ 3.1 with Bundler (only if you want to run Jekyll locally; the CI uses `actions/jekyll-build-pages` which provides its own Ruby and Jekyll).
 - Git.
 
 ### Build the site locally
 
-There is no `Gemfile` checked in (the production build uses GitHub's preinstalled Jekyll image). To preview locally:
+A `Gemfile` is checked in (Jekyll 4.3 + `webrick`, built with Bundler so we control the Jekyll version directly). The CI build uses `actions/jekyll-build-pages` and does not consume this `Gemfile`; it exists for local development. To preview locally:
 
 ```bash
-gem install jekyll
-jekyll serve
+bundle install
+bundle exec jekyll serve
 ```
 
 Open `http://localhost:4000/`.
