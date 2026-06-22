@@ -2,18 +2,21 @@
 
 Thanks for your interest in contributing to **Curveball Ventures**, the Jekyll site behind [curveball-ventures.com](https://curveball-ventures.com).
 
-This document is the practical "how do I contribute" guide. For the full architecture, CI pipeline, security model, and operational runbook, see the [README](README.md).
+This document is the practical "how do I contribute" guide. For the full architecture, CI pipeline, security model, and
+operational runbook, see the [README](README.md).
 
 ## Expectations
 
-Be respectful and constructive in issues, pull requests, and reviews. Keep changes focused — one logical change per pull request.
+Be respectful and constructive in issues, pull requests, and reviews. Keep changes focused — one logical change per pull
+request.
 
 ## Prerequisites
 
 - **Ruby** ≥ 3.1 with **Bundler** (for running the site locally)
 - **Git**
 
-CI builds the site with `actions/jekyll-build-pages`, which provides its own Ruby and Jekyll. The `Gemfile` exists so you can build and preview locally.
+CI builds the site with `actions/jekyll-build-pages`, which provides its own Ruby and Jekyll. The `Gemfile` exists so
+you can build and preview locally.
 
 ## Local setup and preview
 
@@ -46,7 +49,8 @@ git checkout -b feat/your-change
    git push -u origin feat/your-change
    ```
 
-   Pushing triggers the preview workflow, which builds the site and publishes it to `https://curveball-ventures.info/<short-sha>/` within about 30 seconds.
+   Pushing triggers the preview workflow, which builds the site and publishes it to
+   `https://curveball-ventures.info/<short-sha>/` within about 30 seconds.
 
 3. Open a pull request against `main`. A bot posts a sticky comment with the preview URL, and CI runs automatically.
 4. Iterate by pushing more commits — the preview and CI re-run, and the sticky comment updates to the latest commit.
@@ -65,7 +69,8 @@ Merging to `main` queues a production deploy that pauses for manual approval bef
 The `pr-validate` workflow runs on every pull request:
 
 - **`build`** — required. The pull request cannot merge until this passes.
-- **`html-validate`, `link-check`, `spell-check`, `yaml-lint`, `actions-lint`, `markdown-lint`** — advisory. They do not block merging, but please try to keep them green.
+- **`html-validate`, `link-check`, `spell-check`, `yaml-lint`, `actions-lint`, `markdown-lint`** — advisory. They do not
+  block merging, but please try to keep them green.
 
 ## Running linters locally (optional)
 
@@ -89,15 +94,18 @@ actionlint
 
 ## Spell check
 
-If the spell checker flags a legitimate term (a name, brand, or technical word), add it to the `words` list in `.cspell.json` rather than rewording the content.
+If the spell checker flags a legitimate term (a name, brand, or technical word), add it to the `words` list in
+`.cspell.json` rather than rewording the content.
 
 ## Adding a new linter
 
-See [How do I add a new linter to the PR pipeline?](README.md#how-do-i-add-a-new-linter-to-the-pr-pipeline) in the README for the full procedure.
+See [How do I add a new linter to the PR pipeline?](README.md#how-do-i-add-a-new-linter-to-the-pr-pipeline) in the
+README for the full procedure.
 
 ## Reporting issues
 
-Open a GitHub issue describing the problem. Include steps to reproduce and, where relevant, the preview URL for the affected commit.
+Open a GitHub issue describing the problem. Include steps to reproduce and, where relevant, the preview URL for the
+affected commit.
 
 ---
 
